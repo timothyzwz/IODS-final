@@ -1,7 +1,7 @@
 ---
 title: "IODS Course Final Project"
 author: "Wenzhong Zhang"
-body: "Email: Wenzhong.Zhang@helsinki.fi"
+subtitle: "Email: Wenzhong.Zhang@helsinki.fi"
 date: "11th December 2017"
 output:
   html_document:
@@ -15,8 +15,10 @@ output:
 ---
 
 ***
-  aaa
-```{r}
+# Research Question
+a+b
 
-```
+# SDjf
+
+  
   
