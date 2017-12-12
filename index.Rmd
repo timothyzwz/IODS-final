@@ -9,16 +9,74 @@ output:
     toc: true
     toc_depth: 3
     fig_caption: true
-    fig_width: 6
-    fig_height: 4
+    fig_width: 10
+    fig_height: 10
     code_folding: hide
 ---
 
 ***
-# Research Question
-Gender issues have become more and more heated topic world wide. The developement of human was never balanced with the respect to gender equality. Certain countries are better while most developing and under-developed countries falling behind. In this final project of IODS course, I would like to explore more the relation of gender imbalance and human development index. 
+# Research question
+Gender issues have become more and more heated topic world wide. The development of human was never balanced with the respect to gender equality. Certain countries are better while most developing and under-developed countries falling behind. In this final project of IODS course, I would like to explore more the relation of gender imbalance and human development index. Here are the hypothese to be tested by R codes: 
 
-# SDjf
+1. The completeness of mean school education (`meaneduratio`) is positively related with the HDI (`hdi`). 
+2. The binary teen birth indicator (`teenbirth_high`) is related with the HDI (`hdi`), the rank differences between HDI and GNI (`gnirhdir`), and the secondary education ratio for female (`edu2F`). 
 
+3. The categorical variable (`hdi_d`) based on the human development cutoff points (see [here](http://hdr.undp.org/sites/default/files/hdr2015_technical_notes.pdf) for explanation) can be predicted by other variables (excluding `hdi`, of course). 
+
+4. Perform K-mean clustering on the data. 
+
+# Description of data wrangling and the data
+
+The data wrangling file can be found [here](https://github.com/timothyzwz/IODS-final/blob/master/Data/create_human.R). The original two data sets were downloaded from [here](http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/human_development.csv) and [here](http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/gender_inequality.csv). These two data sets were joined by "country" (`cty`) variable. The incomplete data was filtered out. The ratio of education completeness was added as a new column. The level of `hdi` was categorized into four degrees (`low`, `medium`, `high` and `very high`) according to the description. Some unnecessary data (unrelated to the hypothesis) was removed from the data. 
+
+Let's explore the data first and I will explain the meaning of those vairables to you! 
+
+First, we read the data from the .txt file. 
+```{r}
+human <- read.table("Data/human.txt")
+```
+
+Next, we take a look at the dimension and summary of the data. The data has 159 observations from 12 variables. 
+```{r}
+dim(human)
+str(human)
+summary(human)
+```
+  The variables are summarized in the following table. 
   
+  Variable | Type | Meaning
+  -------- | ---- | -------
+  `hdi` | numeric | Human Development Index (HDI)
+  `lifebirth` | numeric | Life expectancy at birth
+  `edutime` | numeric | Expected years of schooling
+  `meanedu` | numeric | Mean years of schooling
+  `gni` | integer | Gross National Income (GNI) per capita
+  `gnirhdir` | integer | The ranking of GNI minus the ranking of HDI
+  `teenbirth` | numeric | Adolescent Birth Rate
+  `edu2F` | numeric | Population with Secondary Education (Female)
+  `labF` | numeric | Labour Force Participation Rate (Female)
+  `meaneduratio` | numeric | `meanedu`/`edutime`
+  `teenbirth_high` | logical | `TRUE` for the higher half of `teenbirth`
+  `hdi_d` | categorical | Four level categorical variable based on HDI level 
   
+
+# Data overview
+
+The data is first plotted by the `ggpairs` function in the `ggplot2` package. 
+
+```{r}
+library(ggplot2)
+library(GGally)
+human2 <- dplyr::select(human, -hdi_d)
+p <- ggpairs(human2, mapping = aes(alpha = 0.9), lower = list(combo = wrap("facethist", bins = 20)), title = "Figure 1. Graphical overview.")
+p
+```
+
+
+
+
+
+
+
+
+

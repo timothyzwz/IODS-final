@@ -41,7 +41,7 @@ dim(human)
 glimpse(human)
 
 # columns to keep
-keep <- c("cty", "hdi", "lifebirth", "edutime", "meanedu", "gni", "gnirhdir", "teenbirth", "edu2F", "edu2M", "labF", "labM")
+keep <- c("cty", "hdi", "lifebirth", "edutime", "meanedu", "gni", "gnirhdir", "teenbirth", "edu2F", "labF")
 
 # select the 'keep' columns
 human <- select(human, one_of(keep))
