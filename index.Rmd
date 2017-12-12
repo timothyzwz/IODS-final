@@ -16,7 +16,7 @@ output:
 
 ***
 # Research Question
-a+b
+Gender issues have become more and more heated topic world wide. The developement of human was never balanced with the respect to gender equality. Certain countries are better while most developing and under-developed countries falling behind. In this final project of IODS course, I would like to explore more the relation of gender imbalance and human development index. 
 
 # SDjf
 
