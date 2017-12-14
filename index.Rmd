@@ -236,7 +236,7 @@ The research question 2 is partially correct, with only the `hdi` has negative c
 
 Clustering means that some points (or observations) of the data are in some sense closer to each other than some other points. In other words, the data points do not comprise a homogeneous sample, but instead, it is somehow clustered.
 
-The `human` data is standardised and its summary printed here. Scaling of data may be useful and/or necessary under certain circumstances (e.g. when variables span different ranges). Standardization is the scaling procedure which results in a zero mean and unit variance of any descriptor variable. For every data value the mean ¦Ì has to be subtracted, and the result has to be divided by the standard deviation ¦Ò (note that the order of these two operations must not be reversed):
+The `human` data is standardised and its summary printed here. Scaling of data may be useful and/or necessary under certain circumstances (e.g. when variables span different ranges). Standardization is the scaling procedure which results in a zero mean and unit variance of any descriptor variable. For every data value the mean Î¼ has to be subtracted, and the result has to be divided by the standard deviation Ïƒ (note that the order of these two operations must not be reversed):
 ```{r}
 library(tidyverse)
 library(dplyr)
