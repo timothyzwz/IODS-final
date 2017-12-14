@@ -15,6 +15,7 @@ output:
     fig_width: 10
     fig_height: 10
     code_folding: hide
+    encoding: UTF-8
 ---
 
 ***
