@@ -15,15 +15,19 @@ output:
 ---
 
 ***
+
 # Research question
 Gender issues have become more and more heated topic world wide. The development of human was never balanced with the respect to gender equality. Certain countries are better while most developing and under-developed countries falling behind. In this final project of IODS course, I would like to explore more the relation of gender imbalance and human development index. Here are the hypothese to be tested by R codes: 
 
 1. The completeness of mean school education (`meaneduratio`) is positively related with the HDI (`hdi`). 
+
 2. The binary teen birth indicator (`teenbirth_high`) is related with the HDI (`hdi`), the rank differences between HDI and GNI (`gnirhdir`), and the secondary education ratio for female (`edu2F`). 
 
 3. The categorical variable (`hdi_d`) based on the human development cutoff points (see [here](http://hdr.undp.org/sites/default/files/hdr2015_technical_notes.pdf) for explanation) can be predicted by other variables (excluding `hdi`, of course). 
 
 4. Perform K-mean clustering on the data. 
+
+***
 
 # Description of data wrangling and the data
 
@@ -59,10 +63,11 @@ summary(human)
   `teenbirth_high` | logical | `TRUE` for the higher half of `teenbirth`
   `hdi_d` | categorical | Four level categorical variable based on HDI level 
   
+***
 
 # Data overview
 
-The data is first plotted by the `ggpairs` function in the `ggplot2` package. 
+The data is first plotted by the `ggpairs` function in the `ggplot2` package. The `hdi_d` variable was removed from this visualization since `ggpairs` has problem processing the data. Nevertheless, one can quite easily check the distribution of the data through Figure 1. 
 
 ```{r}
 library(ggplot2)
@@ -72,11 +77,237 @@ p <- ggpairs(human2, mapping = aes(alpha = 0.9), lower = list(combo = wrap("face
 p
 ```
 
+Subsequently, a correlation plot was established: 
+
+```{r}
+library(corrplot)
+library(magrittr)
+cor(human2) %>% corrplot(method="color", order="hclust", type = "upper", cl.pos = "r", tl.pos = "d", tl.cex = 0.8, title = "Figure 2. Correlation plots for human", mar=c(0,0,1,0))
+
+```
+
+With regards to the previous three research questions, we can see from the data overview that: 
+
+1. The completeness of mean school education (`meaneduratio`) seems to be positively related with the HDI (`hdi`). However, during the analysis we include also `gni` and `lifebirth` variables. 
+
+2. The binary teen birth indicator (`teenbirth_high`) seems to be negatively related with the HDI (`hdi`) and the secondary education ratio for female (`edu2F`). However, the rank differences between HDI and GNI (`gnirhdir`) does not have visible relationship with the binary variable. 
+
+3. The other two research questions will be dealt with later. 
+
+***
+
+# Data analysis
+
+## Linear regression and validation
+
+According to the assumption 1, the `meaneduratio` is fitted with `hdi`, `gni` and `lifebirth` variables linearly. 
+
+```{r}
+regression <- lm(meaneduratio ~ hdi + gni + lifebirth, data = human)
+```
+
+The summary of the regression is shown here: 
+```{r}
+summary(regression)
+```
+
+The results suggested that all three of those variables have statistically significant linear relationship with the `meaneduratio` variable. All `t` vaules are lower than 0.0001. It is positively related with `hdi` and negatively related with `gni` and `lifebirth`. The final regreesion model is $y=9.751x_{1}-4.179x_{2}-4.469x_{3}+3.858$, where $y=$`meaneduratio`, $x_{1}=$`hdi`, $x_{2}=$`gni`, and $x_{3}=$`lifebirth`. The Multiple R-squared (the coefficient of determination) is the proportion of the variance in the data that's explained by the model. The more variables, the larger this will be. The Adjusted one reduces that to account for the number of variables in the model [[ref](https://stats.stackexchange.com/questions/59250/how-to-interpret-the-output-of-the-summary-method-for-an-lm-object-in-r)]. Here the multiple R-squred value is 0.5455, which is a relatively good fit for the data. However, R-squared cannot determine whether the coefficient estimates and predictions are biased, which is why later the residual plots are assessed. R-squared also does not indicate whether a regression model is adequate. A low R-squared value can be present for a good model, or a high R-squared value for a model that does not fit the data [[ref](http://blog.minitab.com/blog/adventures-in-statistics-2/regression-analysis-how-do-i-interpret-r-squared-and-assess-the-goodness-of-fit)]. 
+
+In the linear regreesion model, the assumptions are: 
+
+1. Linearity: the target variable is modelled as a linear combination of the model parameters. 
+2. Normally distributed errors. 
+3. The errors are not correlated. 
+4. The errors have constant variance. 
+5. The size of a given error does not depend on the explanatory variables. 
+
+The residuals provide a method to explore the validity of the model assumptions. The following diagnostic plots are produced (**Figure 3**): 
+
+* Residuals vs Fitted values (*assumption 4*);
+* Normal QQ-plot (*assumption 2*); 
+* Residuals vs Leverage (*single observation impact*).
+
+**Figure 3**. Residual Plots
+```{r}
+par(mfrow = c(2,2))
+plot(regression, which = c(1, 2, 5))
+```
 
 
+The following conclusions are drawn from the residual analysis:
+
+* The Residuals vs Fitted values plot examines if the errors have constant variance. The graph shows a reasonable constant variance without any pattern. 
+* The Normal QQ-polt checks if the errors are normally distributed. We see from the graph a very good linear model fit, indicating a normally distributed error set. 
+* The Residuals vs Leverage confirms if there are any outliers with high leverage. From the graph, it shows that all the leverage are below 0.20 (except Qatar), indicating reasonably good model fitting. 
+
+The above analysis confirmed that research question 1 is correct. 
+
+***
+
+## Logistic regression and validation
+
+The relationship between binary teen birth indicator (`teenbirth_high`) and the HDI (`hdi`), the rank differences between HDI and GNI (`gnirhdir`), and the secondary education ratio for female (`edu2F`) is explored via logistic regression.
+
+```{r}
+m <- glm(teenbirth_high ~ hdi + gnirhdir + edu2F, data = human, family = "binomial")
+summary(m)
+OR <- coef(m) %>% exp
+CI <- confint(m) %>% exp
+cbind(OR, CI)
+```
+
+Odds ratios (OR) are used to compare the relative odds of the occurrence of the outcome of interest (`teenbirth_high`), given the change to the variable of interest (3 variables here). 
+
+**Table 1**. Comparison of ORs and their confidence intervals. 
+
+Variable | OR | 2.5% | 97.5%
+------- | ------ | ------ | -------
+`hdi` | 1.12 e-6 | 1.70 e-9 | 4.03 e-4
+`gnirhdir` | 1.00 e0 | 9.70 e-1 | 1.02 e0
+`edu2F` | 9.91 e-1 | 9.66 e-1 | 1.02 e0
+
+From the results, we see that for `hdi`, the OR is well below 1 and their confidence intervals does not include 1. For `gnirhdir` and `edu2F`, the ORs are below 1 and their confidence interval span 1. To sum it up, only `hdi` is negatively related with `teenbirth_high`. The other two variables does not have statistical significant relationship with the binary variable. 
+
+The predictive power of the model is explored here: 
+
+Using the variables which, according to my logistic regression model, had a statistical relationship with high/low alcohol consumption (namely only `hdi`), to  explore the predictive power of the model. The prediction is added as an additional column to the `alc` dataset. It is `TRUE` if the probability is greater than 0.5, otherwise it is `FALSE`. 
+```{r}
+library(dplyr)
+library(tidyr)
+probabilities <- predict(m, type = "response")
+human <- mutate(human, probability = probabilities)
+human <- mutate(human, prediction = probability > 0.5)
+```
+
+The tabulation of predictions vs. the actual values is listed here: 
+```{r}
+table(teenbirth_high = human$teenbirth_high, prediction = human$prediction)
+```
+
+The graphic visualization of both the actual values and the predictions is provided here: 
+```{r}
+g <- ggplot(human, aes(x = probability, y = teenbirth_high, col = prediction))
+g + geom_point() + ggtitle('Figure 4. Prediction and actual value distributions')
+```
+
+The total proportion of inaccurately classified individuals (= the training error) is computed here: 
+```{r}
+table(teenbirth_high = human$teenbirth_high, prediction = human$prediction) %>% prop.table() %>% addmargins()
+loss_func <- function(class, prob) {
+  n_wrong <- abs(class - prob) > 0.5
+  mean(n_wrong)
+}
+loss_func(class = human$teenbirth_high, prob = human$prediction)
+```
+
+The results showed that around 19% of the predictions are not correct, while on the other hand more than 80% of the predictions are correct. It show that the `gni` factor alone is a good predictive tool for `teenbirth_high`. 
+
+10-fold cross-validation is performed subsequently. The prediction error is 0.20. 
+```{r}
+library(boot)
+cv <- cv.glm(data = human, cost = loss_func, glmfit = m, K = 10)
+cv$delta[1]
+```
+
+According to the correlation plot, let's try to include more variables into the model and test its prediction power! `meanedu`, `lifebirth` and `edutime` variables are included now. 
+
+```{r}
+m2 <- glm(teenbirth_high ~ hdi + meanedu + lifebirth + edutime, data = human, family = "binomial")
+probabilities2 <- predict(m2, type = "response")
+human <- mutate(human, probability2 = probabilities2)
+human <- mutate(human, prediction2 = probability2 > 0.5)
+loss_func(class = human$teenbirth_high, prob = human$prediction2)
+cv2 <- cv.glm(data = human, cost = loss_func, glmfit = m2, K = 10)
+cv2$delta[1]
+```
+
+From the results, we see that the prediction error is the same as the model with only `hdi` parameter, while the training error is even larger than the former model. The results showed that, a prediction model does not necessarily need more variable input to become more accurate. 
+
+The research question 2 is partially correct, with only the `hdi` has negative correlation with `teenbirth_high`. 
 
 
+***
 
+# Categorizing and clustering
 
+Clustering means that some points (or observations) of the data are in some sense closer to each other than some other points. In other words, the data points do not comprise a homogeneous sample, but instead, it is somehow clustered.
+
+The `human` data is standardised and its summary printed here. Scaling of data may be useful and/or necessary under certain circumstances (e.g. when variables span different ranges). Standardization is the scaling procedure which results in a zero mean and unit variance of any descriptor variable. For every data value the mean ¦Ì has to be subtracted, and the result has to be divided by the standard deviation ¦Ò (note that the order of these two operations must not be reversed):
+```{r}
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+human <- read.table("Data/human.txt")
+human2 <- dplyr::select(human, -hdi_d)
+human2 <- dplyr::select(human2, -teenbirth_high)
+human2
+human2_scaled <- scale(human2)
+summary(human2_scaled)
+human2_scaled <- as.data.frame(human2_scaled)
+```
+
+The categorical varialbe `hdi_d` is re-added into the `human2_scaled` data. The data is glimpsed to make sure that all the changes are correctly done. 
+
+```{r}
+human2_scaled <- data.frame(human2_scaled, human$hdi_d)
+human2_scaled <- dplyr::select(human2_scaled, -hdi)
+glimpse(human2_scaled)
+```
+
+Divide the dataset to train and test sets, so that 80% of the data belongs to the train set.
+```{r}
+n <- nrow(human2_scaled)
+ind <- sample(n,  size = n * 0.8)
+train <- human2_scaled[ind,]
+test <- human2_scaled[-ind,]
+correct_classes <- test$human.hdi_d
+test <- dplyr::select(test, -human.hdi_d)
+```
+
+Linear Discriminant analysis is a classification (and dimension reduction) method. It finds the (linear) combination of the variables that separate the target variable classes. Here we fit the `human.hdi_d` variable by all other variables available in the dataset as predictors. 
+
+```{r}
+library(MASS)
+lda.fit <- lda(human.hdi_d ~ ., data = train)
+lda.fit
+```
+
+The data is divided into four colours based on the `human.hdi_d` category and the plot below shows the LDA results of them. 
+```{r}
+lda.arrows <- function(x, myscale = 1, arrow_heads = 0.1, color = "red", tex = 0.75, choices = c(1,2)){
+  heads <- coef(x)
+  arrows(x0 = 0, y0 = 0, 
+         x1 = myscale * heads[,choices[1]], 
+         y1 = myscale * heads[,choices[2]], col=color, length = arrow_heads)
+  text(myscale * heads[,choices], labels = row.names(heads), 
+       cex = tex, col=color, pos=3)
+}
+classes <- as.numeric(train$human.hdi_d)
+plot(lda.fit, dimen = 2, col = classes, pch = classes)
+lda.arrows(lda.fit, myscale = 3)
+```
+
+> **Step 4.** Prediction by LDA.
+
+The prediction of the classes with the LDA model on the test data was conducted. 
+```{r}
+lda.pred <- predict(lda.fit, newdata = test)
+```
+
+Cross tabulate the results with the crime categories from the test set. It seems that most of the predictions are indeed correct. 
+```{r}
+table(correct = correct_classes, predicted = lda.pred$class) %>% addmargins
+```
+
+The total proportion of inaccurately predicted individuals is computed here: 
+```{r}
+table(correct = correct_classes, predicted = lda.pred$class) %>% prop.table() %>% addmargins()
+loss_func <- function(class, prob) {
+  n_wrong <- class != prob
+  mean(n_wrong)
+}
+loss_func(class = correct_classes, prob = lda.pred$class)
+```
+Around 33% of the predictions are not correct, which seems to be a good prediction. 
 
 
