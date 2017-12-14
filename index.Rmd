@@ -3,11 +3,14 @@ title: "IODS Course Final Project"
 author: "Wenzhong Zhang"
 subtitle: "Email: Wenzhong.Zhang@helsinki.fi"
 date: "11th December 2017"
+abstract: "The `human` data was explored with a focus on finding the relationship between gender imbalance and human development index (HDI). Four research questions were subsequently raised and check by statistical analysis with R codes. Linear regression, model validation, logistic regression, categorizing and clustering of the data were explored in the project. The results suggested that gender imbalance issues are more severe in underdeveloped and developing countries with lower HDI. And that using HDI, the teen birth rate would be quite accurately predicted."
 output:
   html_document:
     theme: sandstone
     toc: true
+    toc_float: true
     toc_depth: 3
+    number_sections: true
     fig_caption: true
     fig_width: 10
     fig_height: 10
@@ -16,7 +19,7 @@ output:
 
 ***
 
-# Research question
+# **Research question**
 Gender issues have become more and more heated topic world wide. The development of human was never balanced with the respect to gender equality. Certain countries are better while most developing and under-developed countries falling behind. In this final project of IODS course, I would like to explore more the relation of gender imbalance and human development index. Here are the hypothese to be tested by R codes: 
 
 1. The completeness of mean school education (`meaneduratio`) is positively related with the HDI (`hdi`). 
@@ -29,7 +32,7 @@ Gender issues have become more and more heated topic world wide. The development
 
 ***
 
-# Description of data wrangling and the data
+# **Description of data wrangling and the data**
 
 The data wrangling file can be found [here](https://github.com/timothyzwz/IODS-final/blob/master/Data/create_human.R). The original two data sets were downloaded from [here](http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/human_development.csv) and [here](http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/gender_inequality.csv). These two data sets were joined by "country" (`cty`) variable. The incomplete data was filtered out. The ratio of education completeness was added as a new column. The level of `hdi` was categorized into four degrees (`low`, `medium`, `high` and `very high`) according to the description. Some unnecessary data (unrelated to the hypothesis) was removed from the data. 
 
@@ -65,7 +68,7 @@ summary(human)
   
 ***
 
-# Data overview
+# **Data overview**
 
 The data is first plotted by the `ggpairs` function in the `ggplot2` package. The `hdi_d` variable was removed from this visualization since `ggpairs` has problem processing the data. Nevertheless, one can quite easily check the distribution of the data through Figure 1. 
 
@@ -96,9 +99,9 @@ With regards to the previous three research questions, we can see from the data 
 
 ***
 
-# Data analysis
+# **Data analysis**
 
-## Linear regression and validation
+## **Linear regression and validation**
 
 According to the assumption 1, the `meaneduratio` is fitted with `hdi`, `gni` and `lifebirth` variables linearly. 
 
@@ -144,7 +147,7 @@ The above analysis confirmed that research question 1 is correct.
 
 ***
 
-## Logistic regression and validation
+## **Logistic regression and validation**
 
 The relationship between binary teen birth indicator (`teenbirth_high`) and the HDI (`hdi`), the rank differences between HDI and GNI (`gnirhdir`), and the secondary education ratio for female (`edu2F`) is explored via logistic regression.
 
@@ -228,7 +231,7 @@ The research question 2 is partially correct, with only the `hdi` has negative c
 
 ***
 
-# Categorizing and clustering
+## **Categorizing**
 
 Clustering means that some points (or observations) of the data are in some sense closer to each other than some other points. In other words, the data points do not comprise a homogeneous sample, but instead, it is somehow clustered.
 
@@ -240,7 +243,6 @@ library(tidyr)
 human <- read.table("Data/human.txt")
 human2 <- dplyr::select(human, -hdi_d)
 human2 <- dplyr::select(human2, -teenbirth_high)
-human2
 human2_scaled <- scale(human2)
 summary(human2_scaled)
 human2_scaled <- as.data.frame(human2_scaled)
@@ -283,11 +285,9 @@ lda.arrows <- function(x, myscale = 1, arrow_heads = 0.1, color = "red", tex = 0
        cex = tex, col=color, pos=3)
 }
 classes <- as.numeric(train$human.hdi_d)
-plot(lda.fit, dimen = 2, col = classes, pch = classes)
-lda.arrows(lda.fit, myscale = 3)
+plot(lda.fit, dimen = 2, col = classes, pch = classes, main = "Figure 5. LDA categorizing of the data.")
+lda.arrows(lda.fit, myscale = 2)
 ```
-
-> **Step 4.** Prediction by LDA.
 
 The prediction of the classes with the LDA model on the test data was conducted. 
 ```{r}
@@ -308,6 +308,52 @@ loss_func <- function(class, prob) {
 }
 loss_func(class = correct_classes, prob = lda.pred$class)
 ```
-Around 33% of the predictions are not correct, which seems to be a good prediction. 
 
+Only approximately 6% of the predictions are not correct, which seems to be a very nice prediction. This confirms that research question 3 is valid and the model has quite good prediction power.  
 
+***
+
+## Distance measures and clustering
+
+Similarity or dissimilarity of objects can be measured with distance measures. There are many different measures for different types of data. The most common or "normal" distance measure is Euclidean distance.
+
+The distances between the observations are calculated: 
+
+1. Euclidean distance
+```{r}
+human2_scaled <- dplyr::select(human2_scaled, -human.hdi_d)
+dist_eu <- dist(human2_scaled)
+summary(dist_eu)
+```
+
+2. Manhattan distance
+```{r}
+dist_man <- dist(human2_scaled, method = "manhattan")
+summary(dist_man)
+```
+
+To find the optimal K-means value, the total of within cluster sum of squares (WCSS) vs. the number of cluster changes is plotted. 
+```{r}
+library(ggplot2)
+set.seed(123)
+k_max <- 10
+twcss <- sapply(1:k_max, function(k){kmeans(human2_scaled, k)$tot.withinss})
+qplot(x = 1:k_max, y = twcss, geom = 'line', main = "Figure 6. k-mean optimization plot.")
+```
+
+The optimal number of clusters is when the total WCSS drops radically. In this case, the optimal K-means values is 2. The clusters are then visualised here: 
+
+```{r}
+km <-kmeans(human2_scaled, centers = 2)
+pairs(human2_scaled, col = km$cluster, main = "Figure 7. Visulization of the clustering results.")
+```
+
+The data in the standardised Boston dataset are classified into two clusters based on the K-means analysis. From the graph you can see that the data from the same cluster seem to be continurous and forms a lump in all distributions. However, we cannot simply say that the two clusters is the best fit for the current data. More realistic questions need to be taken into consideration when deciding the number of the clusters. 
+
+# **Conclusions and discussion**
+
+In the final project of the IODS course, I explored more about the `human` data. The techniques learnt during the course, such as linear regression and model validation, logistic regression, linear discriminat analysis and K-mean clustering are explored. The research questions raised were checked, verified and corrected according to the analysis results. Exercises about data wrangling was also done and seems to be quite interesting. 
+
+The results suggested that it is statistically clear that gender imbalance are more severe in underdeveloped and developing countries with low HDI index. And that HDI can successfuly predict the Adolences birth rate in the countries. 
+
+Data is not powerful without proper analysis and modern data science has enabled us with proper tools to dig deeper into the data and predict unknown or foreseeable data. This course is only the beginning of data analysis and already I felt very beneficial. 
